@@ -1,23 +1,33 @@
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
+package com.example.tablelayout
+
 import android.location.Geocoder
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import java.util.*
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import java.util.Locale
 
-class MainActivity : AppCompatActivity() {
-
+class MainActivity3 : AppCompatActivity() {
     lateinit var edtAddress: EditText
     lateinit var btnGetCoordinates: Button
     lateinit var txtResult: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main3)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         edtAddress = findViewById(R.id.edtAddress)
         btnGetCoordinates = findViewById(R.id.btnGetCoordinates)
@@ -25,15 +35,27 @@ class MainActivity : AppCompatActivity() {
 
         btnGetCoordinates.setOnClickListener {
             val address = edtAddress.text.toString()
-            val geocoder = Geocoder(this, Locale.getDefault())
-            val addresses = geocoder.getFromLocationName(address, 1)
+            Thread {
+                try {
+                    val geocoder = Geocoder(this, Locale.getDefault())
+                    val addresses = geocoder.getFromLocationName(address, 1)
 
-            if (addresses != null && addresses.isNotEmpty()) {
-                val location = addresses[0]
-                txtResult.text = "Latitude: ${location.latitude}, Longitude: ${location.longitude}"
-            } else {
-                txtResult.text = "Location not found"
-            }
+                    runOnUiThread {
+                        if (addresses != null && addresses.isNotEmpty()) {
+                            val location = addresses[0]
+                            txtResult.text =
+                                "Latitude: ${location.latitude}, Longitude: ${location.longitude}"
+                        } else {
+                            txtResult.text = "Location not found"
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread {
+                        txtResult.text = "Error: ${e.localizedMessage}"
+                    }
+                }
+            }.start()
         }
     }
 }
